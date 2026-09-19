@@ -95,12 +95,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getSharedActivityNameFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("activity");
+    const encodedActivityName =
+      params.get("activityKey") ?? params.get("activity");
+
+    if (!encodedActivityName) {
+      return null;
+    }
+
+    try {
+      return decodeURIComponent(encodedActivityName);
+    } catch (error) {
+      return encodedActivityName;
+    }
   }
 
   function createActivityShareUrl(name) {
     const shareUrl = new URL(window.location.href);
-    shareUrl.searchParams.set("activity", name);
+    shareUrl.searchParams.delete("activity");
+    shareUrl.searchParams.set("activityKey", encodeURIComponent(name));
     return shareUrl.toString();
   }
 
@@ -115,9 +127,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function convertHtmlToText(value) {
-    const plainTextContainer = document.createElement("div");
-    plainTextContainer.innerHTML = value ?? "";
-    return plainTextContainer.textContent.trim();
+    const parsedDocument = new DOMParser().parseFromString(
+      String(value ?? ""),
+      "text/html"
+    );
+    return parsedDocument.body.textContent.trim();
   }
 
   async function copyTextToClipboard(text) {
@@ -182,16 +196,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function focusSharedActivityCard(activityCard) {
     const previousTabIndex = activityCard.getAttribute("tabindex");
-    activityCard.setAttribute("tabindex", "-1");
-    activityCard.classList.add("shared-activity-highlight");
-    activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
-    activityCard.focus({ preventScroll: true });
-    setTimeout(() => {
-      activityCard.classList.remove("shared-activity-highlight");
+    const restoreTabIndex = () => {
       if (previousTabIndex === null) {
         activityCard.removeAttribute("tabindex");
       } else {
         activityCard.setAttribute("tabindex", previousTabIndex);
+      }
+    };
+
+    activityCard.setAttribute("tabindex", "-1");
+    activityCard.classList.add("shared-activity-highlight");
+    activityCard.addEventListener(
+      "blur",
+      () => {
+        restoreTabIndex();
+      },
+      { once: true }
+    );
+    activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    activityCard.focus({ preventScroll: true });
+    setTimeout(() => {
+      activityCard.classList.remove("shared-activity-highlight");
+      if (document.activeElement !== activityCard) {
+        restoreTabIndex();
       }
     }, 2500);
   }
