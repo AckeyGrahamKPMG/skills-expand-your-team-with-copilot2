@@ -72,14 +72,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function initializeTheme() {
-    const savedTheme = localStorage.getItem("theme");
-    applyTheme(savedTheme);
+    try {
+      const savedTheme = localStorage.getItem("theme");
+      applyTheme(savedTheme);
+    } catch (error) {
+      console.error("Error reading saved theme:", error);
+      applyTheme("light");
+    }
   }
 
   function toggleTheme() {
     const nextTheme = currentTheme === "dark" ? "light" : "dark";
-    localStorage.setItem("theme", nextTheme);
     applyTheme(nextTheme);
+    try {
+      localStorage.setItem("theme", nextTheme);
+    } catch (error) {
+      console.error("Error saving theme:", error);
+    }
   }
 
   // Initialize filters from active elements
