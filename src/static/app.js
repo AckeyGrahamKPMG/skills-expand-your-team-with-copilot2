@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function createActivityShareUrl(name) {
-    const shareUrl = new URL(`${window.location.origin}${window.location.pathname}`);
+    const shareUrl = new URL(window.location.href);
     shareUrl.searchParams.set("activity", name);
     return shareUrl.toString();
   }
@@ -536,6 +536,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // Activity passed all filters, add to filtered list
       filteredActivities[name] = details;
     });
+
+    if (
+      shouldFocusSharedActivity &&
+      sharedActivityName &&
+      !filteredActivities[sharedActivityName] &&
+      allActivities[sharedActivityName]
+    ) {
+      filteredActivities[sharedActivityName] = allActivities[sharedActivityName];
+    }
 
     // Check if there are any results
     if (Object.keys(filteredActivities).length === 0) {
