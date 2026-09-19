@@ -30,6 +30,41 @@
   --error-light: #ffebee;
   --info: #0c5460;
   --info-light: #d1ecf1;
+  --header-button-background: rgba(255, 255, 255, 0.2);
+  --header-button-background-hover: rgba(255, 255, 255, 0.3);
+  --button-text: #ffffff;
+  --cancel-button-background: #f1f1f1;
+  --cancel-button-text: #333333;
+  --confirm-button-background: #dc3545;
+  --confirm-button-text: #ffffff;
+}
+
+body.dark-mode {
+  --background: #121212;
+  --surface: #1e1e1e;
+  --text-primary: #f5f5f5;
+  --text-secondary: #c7c7c7;
+  --border: #3a3a3a;
+  --border-light: #2c2c2c;
+  --border-focus: #5a5a5a;
+  --primary: #7986cb;
+  --primary-light: #9fa8da;
+  --primary-dark: #5c6bc0;
+  --primary-text: #0f172a;
+  --secondary: #ffb74d;
+  --secondary-light: #ffcc80;
+  --secondary-dark: #fb8c00;
+  --secondary-text: #1f2937;
+  --success-light: #1d3a22;
+  --warning-light: #4a360d;
+  --error-light: #4a1d1d;
+  --info: #8bd3dd;
+  --info-light: #12343a;
+  --header-button-background: rgba(255, 255, 255, 0.12);
+  --header-button-background-hover: rgba(255, 255, 255, 0.22);
+  --button-text: #f5f5f5;
+  --cancel-button-background: #2c2c2c;
+  --cancel-button-text: #f5f5f5;
 }
 
 * {
@@ -48,6 +83,7 @@ body {
   padding: 12px;
   background-color: var(--background);
   font-size: 0.9rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 header {
@@ -617,6 +653,9 @@ footer {
   position: absolute;
   top: 10px;
   right: 15px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 #user-status {
@@ -639,15 +678,16 @@ footer {
   display: flex;
   align-items: center;
   gap: 5px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--header-button-background);
   border-radius: 20px;
   padding: 4px 12px;
   font-size: 0.85rem;
   transition: background-color 0.2s;
+  color: var(--button-text);
 }
 
 .icon-button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--header-button-background-hover);
 }
 
 .user-icon {
@@ -656,11 +696,34 @@ footer {
 
 #logout-button {
   padding: 3px 10px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--header-button-background);
   font-size: 0.8rem;
   border-radius: 20px;
 }
 
 #logout-button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--header-button-background-hover);
+}
+
+.cancel-btn {
+  background-color: var(--cancel-button-background);
+  color: var(--cancel-button-text);
+}
+
+.confirm-btn {
+  background-color: var(--confirm-button-background);
+  color: var(--confirm-button-text);
+}
+
+@media (max-width: 767px) {
+  #user-controls {
+    position: static;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  #user-status {
+    justify-content: center;
+  }
 }
