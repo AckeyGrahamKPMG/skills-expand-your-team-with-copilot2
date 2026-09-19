@@ -61,88 +61,90 @@ document.addEventListener("DOMContentLoaded", () => {
       currentDay = activeDayFilter.dataset.day;
     }
 
-    function getSharedActivityNameFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("activity");
-    }
-
-    function createActivityShareUrl(name) {
-      const shareUrl = new URL(
-        `${window.location.origin}${window.location.pathname}`
-      );
-      shareUrl.searchParams.set("activity", name);
-      return shareUrl.toString();
-    }
-
-    function buildShareText(name, details, formattedSchedule) {
-      return `Check out ${name} at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
-    }
-
-    async function copyTextToClipboard(text) {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        return;
-      }
-
-      const helperTextArea = document.createElement("textarea");
-      helperTextArea.value = text;
-      helperTextArea.setAttribute("readonly", "");
-      helperTextArea.style.position = "absolute";
-      helperTextArea.style.left = "-9999px";
-      document.body.appendChild(helperTextArea);
-      helperTextArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(helperTextArea);
-    }
-
-    async function shareActivity(name, details, formattedSchedule) {
-      const shareUrl = createActivityShareUrl(name);
-      const shareText = buildShareText(name, details, formattedSchedule);
-
-      try {
-        if (navigator.share) {
-          await navigator.share({
-            title: `${name} | Mergington High School`,
-            text: shareText,
-            url: shareUrl,
-          });
-          showMessage(`Shared ${name}.`, "success");
-          return;
-        }
-
-        await copyTextToClipboard(`${shareText}\n${shareUrl}`);
-        showMessage(`Share details copied for ${name}.`, "success");
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Error sharing activity:", error);
-          showMessage("Unable to share this activity right now.", "error");
-        }
-      }
-    }
-
-    async function copyActivityLink(name) {
-      try {
-        await copyTextToClipboard(createActivityShareUrl(name));
-        showMessage(`Link copied for ${name}.`, "success");
-      } catch (error) {
-        console.error("Error copying activity link:", error);
-        showMessage("Unable to copy the activity link right now.", "error");
-      }
-    }
-
-    function focusSharedActivityCard(activityCard) {
-      activityCard.classList.add("shared-activity-highlight");
-      activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => {
-        activityCard.classList.remove("shared-activity-highlight");
-      }, 2500);
-    }
-
     // Initialize time filter
     const activeTimeFilter = document.querySelector(".time-filter.active");
     if (activeTimeFilter) {
       currentTimeRange = activeTimeFilter.dataset.time;
     }
+  }
+
+  function getSharedActivityNameFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("activity");
+  }
+
+  function createActivityShareUrl(name) {
+    const shareUrl = new URL(`${window.location.origin}${window.location.pathname}`);
+    shareUrl.searchParams.set("activity", name);
+    return shareUrl.toString();
+  }
+
+  function buildShareText(name, details, formattedSchedule) {
+    return `Check out ${name} at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const helperTextArea = document.createElement("textarea");
+    helperTextArea.value = text;
+    helperTextArea.setAttribute("readonly", "");
+    helperTextArea.style.position = "absolute";
+    helperTextArea.style.left = "-9999px";
+    document.body.appendChild(helperTextArea);
+    helperTextArea.select();
+    const copied = document.execCommand("copy");
+    document.body.removeChild(helperTextArea);
+
+    if (!copied) {
+      throw new Error("Copy command failed");
+    }
+  }
+
+  async function shareActivity(name, details, formattedSchedule) {
+    const shareUrl = createActivityShareUrl(name);
+    const shareText = buildShareText(name, details, formattedSchedule);
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${name} | Mergington High School`,
+          text: shareText,
+          url: shareUrl,
+        });
+        showMessage(`Shared ${name}.`, "success");
+        return;
+      }
+
+      await copyTextToClipboard(`${shareText}\n${shareUrl}`);
+      showMessage(`Share details copied for ${name}.`, "success");
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Error sharing activity:", error);
+        showMessage("Unable to share this activity right now.", "error");
+      }
+    }
+  }
+
+  async function copyActivityLink(name) {
+    try {
+      await copyTextToClipboard(createActivityShareUrl(name));
+      showMessage(`Link copied for ${name}.`, "success");
+    } catch (error) {
+      console.error("Error copying activity link:", error);
+      showMessage("Unable to copy the activity link right now.", "error");
+    }
+  }
+
+  function focusSharedActivityCard(activityCard) {
+    activityCard.classList.add("shared-activity-highlight");
+    activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => {
+      activityCard.classList.remove("shared-activity-highlight");
+    }, 2500);
   }
 
   // Function to set day filter
