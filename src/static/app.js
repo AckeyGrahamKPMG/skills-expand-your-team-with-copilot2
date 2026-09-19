@@ -40,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
+  const sharedActivityName = getSharedActivityNameFromUrl();
+  let shouldFocusSharedActivity = Boolean(sharedActivityName);
 
   // Authentication state
   let currentUser = null;
@@ -53,6 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize filters from active elements
   function initializeFilters() {
+    if (sharedActivityName) {
+      resetFiltersForSharedActivity();
+      return;
+    }
+
     // Initialize day filter
     const activeDayFilter = document.querySelector(".day-filter.active");
     if (activeDayFilter) {
@@ -64,6 +71,156 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activeTimeFilter) {
       currentTimeRange = activeTimeFilter.dataset.time;
     }
+  }
+
+  function resetFiltersForSharedActivity() {
+    currentFilter = "all";
+    currentDay = "";
+    currentTimeRange = "";
+    searchQuery = "";
+    searchInput.value = "";
+
+    categoryFilters.forEach((button) => {
+      button.classList.toggle("active", button.dataset.category === "all");
+    });
+
+    dayFilters.forEach((button) => {
+      button.classList.toggle("active", button.dataset.day === "");
+    });
+
+    timeFilters.forEach((button) => {
+      button.classList.toggle("active", button.dataset.time === "");
+    });
+  }
+
+  function getSharedActivityNameFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const encodedActivityName =
+      params.get("activityKey") ?? params.get("activity");
+
+    if (!encodedActivityName) {
+      return null;
+    }
+
+    try {
+      return decodeURIComponent(encodedActivityName);
+    } catch (error) {
+      return encodedActivityName;
+    }
+  }
+
+  function createActivityShareUrl(name) {
+    const shareUrl = new URL(window.location.href);
+    shareUrl.searchParams.delete("activity");
+    shareUrl.searchParams.set("activityKey", encodeURIComponent(name));
+    return shareUrl.toString();
+  }
+
+  function normalizeActivityKey(value) {
+    return convertHtmlToText(value).trim().toLowerCase();
+  }
+
+  function buildShareText(name, details, formattedSchedule) {
+    const safeName = convertHtmlToText(name);
+    const safeDescription = convertHtmlToText(details.description);
+    return `Check out ${safeName} at Mergington High School! ${safeDescription} Schedule: ${formattedSchedule}`;
+  }
+
+  function convertHtmlToText(value) {
+    const parsedDocument = new DOMParser().parseFromString(
+      String(value ?? ""),
+      "text/html"
+    );
+    return parsedDocument.body.textContent.trim();
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const helperTextArea = document.createElement("textarea");
+    helperTextArea.value = text;
+    helperTextArea.setAttribute("readonly", "");
+    helperTextArea.style.position = "absolute";
+    helperTextArea.style.left = "-9999px";
+    document.body.appendChild(helperTextArea);
+    helperTextArea.select();
+    const copied = document.execCommand("copy");
+    document.body.removeChild(helperTextArea);
+
+    if (!copied) {
+      throw new Error("Copy command failed");
+    }
+  }
+
+  async function shareActivity(name, details, formattedSchedule) {
+    const shareUrl = createActivityShareUrl(name);
+    const shareText = buildShareText(name, details, formattedSchedule);
+    const shareData = {
+      title: `${name} | Mergington High School`,
+      text: shareText,
+      url: shareUrl,
+    };
+
+    try {
+      if (
+        navigator.share &&
+        (!navigator.canShare || navigator.canShare(shareData))
+      ) {
+        await navigator.share(shareData);
+        showMessage(`Shared ${name}.`, "success");
+        return;
+      }
+
+      await copyTextToClipboard(`${shareText}\n${shareUrl}`);
+      showMessage(`Share details copied for ${name}.`, "success");
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Error sharing activity:", error);
+        showMessage("Unable to share this activity right now.", "error");
+      }
+    }
+  }
+
+  async function copyActivityLink(name) {
+    try {
+      await copyTextToClipboard(createActivityShareUrl(name));
+      showMessage(`Link copied for ${name}.`, "success");
+    } catch (error) {
+      console.error("Error copying activity link:", error);
+      showMessage("Unable to copy the activity link right now.", "error");
+    }
+  }
+
+  function focusSharedActivityCard(activityCard) {
+    const previousTabIndex = activityCard.getAttribute("tabindex");
+    const restoreTabIndex = () => {
+      if (previousTabIndex === null) {
+        activityCard.removeAttribute("tabindex");
+      } else {
+        activityCard.setAttribute("tabindex", previousTabIndex);
+      }
+    };
+
+    activityCard.setAttribute("tabindex", "-1");
+    activityCard.classList.add("shared-activity-highlight");
+    activityCard.addEventListener(
+      "blur",
+      () => {
+        restoreTabIndex();
+      },
+      { once: true }
+    );
+    activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    activityCard.focus({ preventScroll: true });
+    setTimeout(() => {
+      activityCard.classList.remove("shared-activity-highlight");
+      if (document.activeElement !== activityCard) {
+        restoreTabIndex();
+      }
+    }, 2500);
   }
 
   // Function to set day filter
@@ -554,6 +711,14 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
       </div>
       <div class="activity-card-actions">
+        <div class="share-actions">
+          <button class="share-button" type="button" data-activity="${name}">
+            Share
+          </button>
+          <button class="share-link-button" type="button" data-activity="${name}">
+            Copy Link
+          </button>
+        </div>
         ${
           currentUser
             ? `
@@ -578,6 +743,16 @@ document.addEventListener("DOMContentLoaded", () => {
       button.addEventListener("click", handleUnregister);
     });
 
+    const shareButton = activityCard.querySelector(".share-button");
+    shareButton.addEventListener("click", () => {
+      shareActivity(name, details, formattedSchedule);
+    });
+
+    const shareLinkButton = activityCard.querySelector(".share-link-button");
+    shareLinkButton.addEventListener("click", () => {
+      copyActivityLink(name);
+    });
+
     // Add click handler for register button (only when authenticated)
     if (currentUser) {
       const registerButton = activityCard.querySelector(".register-button");
@@ -589,6 +764,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     activitiesList.appendChild(activityCard);
+
+    if (
+      shouldFocusSharedActivity &&
+      normalizeActivityKey(sharedActivityName) === normalizeActivityKey(name)
+    ) {
+      shouldFocusSharedActivity = false;
+      requestAnimationFrame(() => {
+        focusSharedActivityCard(activityCard);
+      });
+    }
   }
 
   // Event listeners for search and filter
