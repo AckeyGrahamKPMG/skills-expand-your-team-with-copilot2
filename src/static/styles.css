@@ -198,12 +198,13 @@ section h3 {
 
 .share-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .share-button,
 .share-link-button {
-  flex: 1;
+  flex: 1 1 120px;
   border-radius: 20px;
   padding: 6px 10px;
   font-size: 0.8rem;

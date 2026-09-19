@@ -104,6 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return shareUrl.toString();
   }
 
+  function normalizeActivityKey(value) {
+    return convertHtmlToText(value).trim().toLowerCase();
+  }
+
   function buildShareText(name, details, formattedSchedule) {
     const safeName = convertHtmlToText(name);
     const safeDescription = convertHtmlToText(details.description);
@@ -140,14 +144,18 @@ document.addEventListener("DOMContentLoaded", () => {
   async function shareActivity(name, details, formattedSchedule) {
     const shareUrl = createActivityShareUrl(name);
     const shareText = buildShareText(name, details, formattedSchedule);
+    const shareData = {
+      title: `${name} | Mergington High School`,
+      text: shareText,
+      url: shareUrl,
+    };
 
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${name} | Mergington High School`,
-          text: shareText,
-          url: shareUrl,
-        });
+      if (
+        navigator.share &&
+        (!navigator.canShare || navigator.canShare(shareData))
+      ) {
+        await navigator.share(shareData);
         showMessage(`Shared ${name}.`, "success");
         return;
       }
@@ -730,7 +738,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     activitiesList.appendChild(activityCard);
 
-    if (shouldFocusSharedActivity && sharedActivityName === name) {
+    if (
+      shouldFocusSharedActivity &&
+      normalizeActivityKey(sharedActivityName) === normalizeActivityKey(name)
+    ) {
       shouldFocusSharedActivity = false;
       requestAnimationFrame(() => {
         focusSharedActivityCard(activityCard);
