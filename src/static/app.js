@@ -55,6 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize filters from active elements
   function initializeFilters() {
+    if (sharedActivityName) {
+      resetFiltersForSharedActivity();
+      return;
+    }
+
     // Initialize day filter
     const activeDayFilter = document.querySelector(".day-filter.active");
     if (activeDayFilter) {
@@ -66,6 +71,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activeTimeFilter) {
       currentTimeRange = activeTimeFilter.dataset.time;
     }
+  }
+
+  function resetFiltersForSharedActivity() {
+    currentFilter = "all";
+    currentDay = "";
+    currentTimeRange = "";
+    searchQuery = "";
+    searchInput.value = "";
+
+    categoryFilters.forEach((button) => {
+      button.classList.toggle("active", button.dataset.category === "all");
+    });
+
+    dayFilters.forEach((button) => {
+      button.classList.toggle("active", button.dataset.day === "");
+    });
+
+    timeFilters.forEach((button) => {
+      button.classList.toggle("active", button.dataset.time === "");
+    });
   }
 
   function getSharedActivityNameFromUrl() {
@@ -148,12 +173,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function focusSharedActivityCard(activityCard) {
+    const previousTabIndex = activityCard.getAttribute("tabindex");
     activityCard.setAttribute("tabindex", "-1");
     activityCard.classList.add("shared-activity-highlight");
     activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
     activityCard.focus({ preventScroll: true });
     setTimeout(() => {
       activityCard.classList.remove("shared-activity-highlight");
+      if (previousTabIndex === null) {
+        activityCard.removeAttribute("tabindex");
+      } else {
+        activityCard.setAttribute("tabindex", previousTabIndex);
+      }
     }, 2500);
   }
 
@@ -546,15 +577,6 @@ document.addEventListener("DOMContentLoaded", () => {
       // Activity passed all filters, add to filtered list
       filteredActivities[name] = details;
     });
-
-    if (
-      shouldFocusSharedActivity &&
-      sharedActivityName &&
-      !filteredActivities[sharedActivityName] &&
-      allActivities[sharedActivityName]
-    ) {
-      filteredActivities[sharedActivityName] = allActivities[sharedActivityName];
-    }
 
     // Check if there are any results
     if (Object.keys(filteredActivities).length === 0) {
