@@ -252,10 +252,7 @@ async function loadApp(initialTheme = null) {
   });
 
   const appScript = fs.readFileSync(
-    path.join(
-      "/home/runner/work/skills-expand-your-team-with-copilot2/skills-expand-your-team-with-copilot2",
-      "src/static/app.js"
-    ),
+    path.join(__dirname, "..", "static", "app.js"),
     "utf8"
   );
 
