@@ -80,7 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function buildShareText(name, details, formattedSchedule) {
-    return `Check out ${name} at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
+    const safeName = convertHtmlToText(name);
+    const safeDescription = convertHtmlToText(details.description);
+    return `Check out ${safeName} at Mergington High School! ${safeDescription} Schedule: ${formattedSchedule}`;
+  }
+
+  function convertHtmlToText(value) {
+    const plainTextContainer = document.createElement("div");
+    plainTextContainer.innerHTML = value ?? "";
+    return plainTextContainer.textContent.trim();
   }
 
   async function copyTextToClipboard(text) {
@@ -140,8 +148,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function focusSharedActivityCard(activityCard) {
+    activityCard.setAttribute("tabindex", "-1");
     activityCard.classList.add("shared-activity-highlight");
     activityCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    activityCard.focus({ preventScroll: true });
     setTimeout(() => {
       activityCard.classList.remove("shared-activity-highlight");
     }, 2500);
