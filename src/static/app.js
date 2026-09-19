@@ -24,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("login-form");
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
+  const themeToggleButton = document.getElementById("theme-toggle-button");
+  const themeToggleIcon = document.getElementById("theme-toggle-icon");
+  const themeToggleText = document.getElementById("theme-toggle-text");
 
   // Activity categories with corresponding colors
   const activityTypes = {
@@ -43,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Authentication state
   let currentUser = null;
+  let currentTheme = "light";
 
   // Time range mappings for the dropdown
   const timeRanges = {
@@ -50,6 +54,33 @@ document.addEventListener("DOMContentLoaded", () => {
     afternoon: { start: "15:00", end: "18:00" }, // After school hours
     weekend: { days: ["Saturday", "Sunday"] }, // Weekend days
   };
+
+  function applyTheme(theme) {
+    currentTheme = theme === "dark" ? "dark" : "light";
+    document.body.classList.toggle("dark-mode", currentTheme === "dark");
+    themeToggleButton.setAttribute(
+      "aria-pressed",
+      String(currentTheme === "dark")
+    );
+    themeToggleButton.setAttribute(
+      "aria-label",
+      currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+    );
+    themeToggleIcon.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+    themeToggleText.textContent =
+      currentTheme === "dark" ? "Light mode" : "Dark mode";
+  }
+
+  function initializeTheme() {
+    const savedTheme = localStorage.getItem("theme");
+    applyTheme(savedTheme);
+  }
+
+  function toggleTheme() {
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
+    localStorage.setItem("theme", nextTheme);
+    applyTheme(nextTheme);
+  }
 
   // Initialize filters from active elements
   function initializeFilters() {
@@ -238,6 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loginButton.addEventListener("click", openLoginModal);
   logoutButton.addEventListener("click", logout);
   closeLoginModal.addEventListener("click", closeLoginModalHandler);
+  themeToggleButton.addEventListener("click", toggleTheme);
 
   // Close login modal when clicking outside
   window.addEventListener("click", (event) => {
@@ -695,15 +727,6 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       document.body.appendChild(confirmDialog);
 
-      // Style the buttons
-      const cancelBtn = confirmDialog.querySelector("#cancel-button");
-      const confirmBtn = confirmDialog.querySelector("#confirm-button");
-
-      cancelBtn.style.backgroundColor = "#f1f1f1";
-      cancelBtn.style.color = "#333";
-
-      confirmBtn.style.backgroundColor = "#dc3545";
-      confirmBtn.style.color = "white";
     }
 
     // Set the message
@@ -863,6 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Initialize app
+  initializeTheme();
   checkAuthentication();
   initializeFilters();
   fetchActivities();
