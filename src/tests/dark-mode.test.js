@@ -230,6 +230,7 @@ async function loadApp(initialTheme = null) {
   const localStorage = createLocalStorage(initialTheme);
   const window = {
     addEventListener() {},
+    localStorage,
   };
 
   const context = vm.createContext({

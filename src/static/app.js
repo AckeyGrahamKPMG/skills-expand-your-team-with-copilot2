@@ -57,6 +57,18 @@ document.addEventListener("DOMContentLoaded", () => {
     weekend: { days: ["Saturday", "Sunday"] }, // Weekend days
   };
 
+  function getThemeStorage() {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage;
+    }
+
+    if (typeof localStorage !== "undefined") {
+      return localStorage;
+    }
+
+    return null;
+  }
+
   function applyTheme(theme) {
     currentTheme = theme === "dark" ? "dark" : "light";
     document.body.classList.toggle("dark-mode", currentTheme === "dark");
@@ -74,8 +86,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function initializeTheme() {
+    const themeStorage = getThemeStorage();
+    if (!themeStorage) {
+      applyTheme("light");
+      return;
+    }
+
     try {
-      const savedTheme = localStorage.getItem("theme");
+      const savedTheme = themeStorage.getItem("theme");
       applyTheme(savedTheme);
     } catch (error) {
       console.error("Error reading saved theme:", error);
@@ -86,8 +104,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function toggleTheme() {
     const nextTheme = currentTheme === "dark" ? "light" : "dark";
     applyTheme(nextTheme);
+    const themeStorage = getThemeStorage();
+    if (!themeStorage) {
+      return;
+    }
+
     try {
-      localStorage.setItem("theme", nextTheme);
+      themeStorage.setItem("theme", nextTheme);
     } catch (error) {
       console.error("Error saving theme:", error);
     }
